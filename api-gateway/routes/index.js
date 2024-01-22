@@ -10,6 +10,14 @@ router.all('/:apiName/:path',(req,res) => {
     // console.log(registry.services[req.params.apiName].url+req.params.path);
     const service=registry.services[req.params.apiName]
     if(service){
+        if(!service.strategy){
+            service.strategy='round_robin';
+            fs.writeFile('./routes/registry.json',JSON.stringify(registry),(error)=>{
+                if(error){
+                    res.send(`Could write loadbalancer strategy`+error);
+                }
+            });
+        }
         const newIndex=loadbalancer[service.strategy]
         (service)
         const url=service.instances[newIndex].url;
@@ -38,7 +46,7 @@ router.post('/register',(req,res)=>{
         //return something
         res.send("Already Registered..."+registrationinfo.url+"\n");
     }else{
-        registry.services[registrationinfo.apiName].push({...registrationinfo })
+        registry.services[registrationinfo.apiName].instances.push({...registrationinfo })
      
         fs.writeFile('./routes/registry.json',JSON.stringify(registry),(error)=>{
             if(error){
@@ -53,10 +61,10 @@ router.post('/register',(req,res)=>{
 router.post('/unregister',(req,res)=>{
     const registrationinfo=req.body;
     if(apialreadyexsist(registrationinfo)){
-        const index=registry.services[registrationinfo.apiName].findIndex((instance)=>{
+        const index=registry.services[registrationinfo.apiName].instances.findIndex((instance)=>{
             return registrationinfo.url===instance.url
         })
-        registry.services[registrationinfo.apiName].splice(index,1);
+        registry.services[registrationinfo.apiName].instances.splice(index,1);
         fs.writeFile('./routes/registry.json',JSON.stringify(registry),(error)=>{
             if(error){
                 res.send(`Could not unregister..+${registrationinfo.apiName}`+error);
@@ -72,7 +80,7 @@ router.post('/unregister',(req,res)=>{
 
 const apialreadyexsist=(registrationinfo)=>{
     let flag=false;
-    registry.services[registrationinfo.apiName].forEach(instance => {
+    registry.services[registrationinfo.apiName].instances.forEach(instance => {
         if(instance.url===registrationinfo.url){
             flag=true;
             return;//basically works like a break

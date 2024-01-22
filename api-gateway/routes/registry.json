@@ -1,9 +1,8 @@
 {
     "services": {
         "testapi": {
-            "strategy":"round_robin",
-            "index":0,
-            "instances":[
+            "index": 0,
+            "instances": [
                 {
                     "apiName": "testapi",
                     "protocol": "http",
@@ -18,7 +17,8 @@
                     "port": 5002,
                     "url": "http://localhost:5002/"
                 }
-            ]
+            ],
+            "strategy": "round_robin"
         }
     }
 }
