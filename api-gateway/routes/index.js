@@ -5,6 +5,28 @@ const registry=require('./registry.json')
 const fs=require('fs');
 const loadbalancer=require('../util/loadbalancer.js');
 
+router.post('/enable/:apiName',(req,res)=>{
+    const apiName=req.params.apiName;
+    const requestbody=req.body;
+    const instances=registry.services[apiName].instances;
+    const Index=instances.findIndex((inst)=>{
+        return inst.url===requestbody.url
+    });
+    if(Index==-1){
+        res.send(`Couldn't find the index for ${requestbody.url} for service ${apiName}`);
+    }else{
+        instances[Index].enabled=requestbody.enabled;
+        fs.writeFile('./routes/registry.json',JSON.stringify(registry),(error)=>{
+            if(error){
+                res.send(`Could not enable/disable for url ${requestbody.url} for service ${apiName}`+error);
+            }else{
+                res.send(`Enabled/disabled for url ${requestbody.url} for service ${apiName}`);
+            }
+        });
+
+    }
+})
+
 router.all('/:apiName/:path',(req,res) => {
     // console.log(req.params.apiName);
     // console.log(registry.services[req.params.apiName].url+req.params.path);
